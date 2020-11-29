@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+LD_LIBRARY_PATH="$(cat ~/.libnice-library-path.txt)" GST_DEBUG="*webrtc*:7" valgrind --leak-check=no --undef-value-errors=no target/debug/webrtc-app --peer-id=$(cat remote-id.txt)

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-(scp src/main.rs 192.168.2.203:dev/gst-examples/webrtc/sendrecv/gst-rust/src/ && \
+(scp src/main.rs "$(cat pi-ip.txt):gst-examples/webrtc/sendrecv/gst-rust/src/" && \
 sleep 3 && \
-scp id.txt 192.168.2.203:dev/gst-examples/webrtc/sendrecv/gst-rust/remote-id.txt) & \
-GST_DEBUG="*webrtc*:7" LD_LIBRARY_PATH="/home/totalorder/dev/gst-build/install/lib/x86_64-linux-gnu" cargo run --
+scp id.txt "$(cat pi-ip.txt):gst-examples/webrtc/sendrecv/gst-rust/remote-id.txt") & \
+GST_DEBUG="*webrtc*:7" LD_LIBRARY_PATH="$(cat ~/.libnice-library-path.txt)" cargo run --
