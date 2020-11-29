@@ -22,9 +22,15 @@ use gst::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 
 use anyhow::{anyhow, bail, Context};
+use std::fs;
 
 const STUN_SERVER: &str = "stun://stun.l.google.com:19302";
 const TURN_SERVER: &str = "turn://foo:bar@webrtc.nirbheek.in:3478";
+
+// https://gitlab.freedesktop.org/gstreamer/gst-examples/-/tree/master/webrtc
+// gst-device-monitor-1.0 Audio/Source
+// https://oz9aec.net/software/gstreamer/pulseaudio-device-names
+// gst-launch-1.0 -v pulsesrc device=alsa_input.pci-0000_00_1f.3.analog-stereo ! audioconvert ! audioresample ! autoaudiosink
 
 // upgrade weak reference or return
 #[macro_export]
@@ -113,11 +119,20 @@ impl App {
         ),
         anyhow::Error,
     > {
+        let version = format!("version: {}", gst::version_string().as_str());
+        println!("{}", version);
+
+        let input = fs::read_to_string("input.txt")
+            .expect("Something went wrong reading the file")
+            .trim()
+            .to_owned();
+
         // Create the GStreamer pipeline
         let pipeline = gst::parse_launch(
-        "videotestsrc pattern=ball is-live=true ! vp8enc deadline=1 ! rtpvp8pay pt=96 ! webrtcbin. \
-         audiotestsrc is-live=true ! opusenc ! rtpopuspay pt=97 ! webrtcbin. \
-         webrtcbin name=webrtcbin"
+            &format!("{}{}",
+                     // "videotestsrc pattern=ball is-live=true ! vp8enc deadline=1 ! rtpvp8pay pt=96 ! webrtcbin. ",
+                     input, " ! opusenc ! rtpopuspay pt=97 ! webrtcbin. \
+         webrtcbin name=webrtcbin")
     )?;
 
         // Downcast from gst::Element to gst::Pipeline
@@ -513,14 +528,20 @@ impl App {
         let caps = pad.get_current_caps().unwrap();
         let name = caps.get_structure(0).unwrap().get_name();
 
-        let sink = if name.starts_with("video/") {
+        let output = fs::read_to_string("output.txt")
+            .expect("Something went wrong reading the file output.txt")
+            .trim()
+            .to_owned();
+
+        // let sink = if name.starts_with("video/") {
+        //     gst::parse_bin_from_description(
+        //         "queue ! videoconvert ! videoscale ! autovideosink",
+        //         true,
+        //     )?
+        // } else if name.starts_with("audio/") {
+        let sink = if name.starts_with("audio/") {
             gst::parse_bin_from_description(
-                "queue ! videoconvert ! videoscale ! autovideosink",
-                true,
-            )?
-        } else if name.starts_with("audio/") {
-            gst::parse_bin_from_description(
-                "queue ! audioconvert ! audioresample ! autoaudiosink",
+                &format!("{}{}", "queue ! audioconvert ! audioresample ! ", output),
                 true,
             )?
         } else {
@@ -654,6 +675,10 @@ async fn async_main() -> Result<(), anyhow::Error> {
     // Say HELLO to the server and see if it replies with HELLO
     let our_id = rand::thread_rng().gen_range(10, 10_000);
     println!("Registering id {} with server", our_id);
+
+    fs::write("id.txt", format!("{}", our_id))
+        .expect("Something went wrong writing the file id.txt");
+
     ws.send(WsMessage::Text(format!("HELLO {}", our_id)))
         .await?;
 
