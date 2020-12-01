@@ -83,10 +83,11 @@ Put the command for the headphones/speakers in "output.txt"
 echo "autoaudiosink" > output.txt
 ```
 
-(pc only) Add the IP of the pi to pi-ip.txt
+(pc only) Add the IP of the pi to pi-ip.txt and remote gst-examples path to gst-examples-dir.txt"
 ```bash
 # NOTE: This is just an example
 echo "192.168.2.203" > pi-pi.txt
+echo "projects/gst-examples" > gst-examples-dir.txt
 ``` 
 
 (pc only) Add yourself to authorized keys on the pi
